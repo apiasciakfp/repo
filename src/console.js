@@ -31,6 +31,7 @@
   NotForFish.createConsole = function (game) {
     function handle(line) {
       var trimmed = String(line).trim();
+      if (trimmed.toUpperCase() === "EXIT") return { text: "Goodbye.", exit: true };
       var match = GUESS_PATTERN.exec(trimmed);
       var card = match && NotForFish.parseCard(match[1]);
       if (card) return { text: guessText(game.guess(card)), exit: false };

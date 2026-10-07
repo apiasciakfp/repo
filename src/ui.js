@@ -47,6 +47,10 @@
     var response = con.handle(line);
     print(response.text);
     input.value = "";
+    if (response.exit) {
+      input.disabled = true;
+      return;
+    }
     input.focus();
   });
 

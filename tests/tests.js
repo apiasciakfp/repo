@@ -243,4 +243,44 @@
       outcome: "IGNORED", repeated: false, triesUsed: 2, triesLeft: 3, revealed: { rank: "Q", suit: "H" }
     });
   });
+
+  // --- Slice 6: EXIT ----------------------------------------------------
+  function exitsWith(con, line) {
+    assertEqual(con.handle(line), { text: "Goodbye.", exit: true }, line);
+  }
+
+  test("D6: EXIT before any guess", function () {
+    exitsWith(NF.createConsole(NF.createGame(pinned("QH"))), "EXIT");
+  });
+
+  test("D6: EXIT mid-game (after 1 miss)", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    assertEqual(con.handle("Guess 2C;").exit, false);
+    exitsWith(con, "EXIT");
+  });
+
+  test("D6: EXIT after a win", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    assertEqual(con.handle("Guess QH;").exit, false);
+    exitsWith(con, "EXIT");
+  });
+
+  test("D6: EXIT after a loss", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    ["9H", "10H", "JH", "KH", "AH"].forEach(function (c) {
+      assertEqual(con.handle("Guess " + c + ";").exit, false);
+    });
+    assertEqual(con.handle("Guess KH;").exit, false, "ignored guess");
+    exitsWith(con, "EXIT");
+  });
+
+  test("D3/D6: exit is case-insensitive; EXIT; is invalid", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    exitsWith(con, "exit");
+    exitsWith(con, "Exit");
+    var res = con.handle("EXIT;");
+    assertEqual(res.exit, false);
+    contains(res.text, "I don't understand");
+    assertEqual(con.handle("hello").exit, false);
+  });
 })();
