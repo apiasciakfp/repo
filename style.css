@@ -1,0 +1,46 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0b0f10;
+  color: #cbd7cf;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.terminal {
+  max-width: 860px;
+  margin: 24px auto;
+  padding: 16px;
+  background: #12191c;
+  border: 1px solid #22302f;
+  border-radius: 6px;
+  min-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.log { flex: 1; overflow-y: auto; }
+.log .line { white-space: pre-wrap; word-break: break-word; }
+.log .echo { color: #8fb3a3; }
+.log .dim { color: #6b7a73; }
+
+.prompt { display: flex; gap: 0.6em; margin-top: 8px; }
+.caret { color: #8fb3a3; }
+
+.prompt input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font: inherit;
+  caret-color: #cbd7cf;
+}
+.prompt input:disabled { opacity: 0.4; }
+
+@media (max-width: 600px) {
+  .terminal { margin: 0; border-radius: 0; min-height: 100vh; }
+}
