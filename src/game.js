@@ -26,6 +26,15 @@
     }
 
     function guess(card) {
+      if (status !== "PLAYING") {
+        return {
+          outcome: "IGNORED",
+          repeated: false,
+          triesUsed: guessed.length,
+          triesLeft: MAX_TRIES - guessed.length,
+          revealed: copyCard(hidden)
+        };
+      }
       guessed.push(copyCard(card));
       var outcome;
       if (NotForFish.sameCard(card, hidden)) {

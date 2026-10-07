@@ -14,6 +14,9 @@
   }
 
   function guessText(result) {
+    if (result.outcome === "IGNORED") {
+      return "The game is over. Nothing happens. Type EXIT to leave.";
+    }
     if (result.outcome === "HIT") {
       return "Hit! The card was " + NotForFish.cardToString(result.revealed) +
         ". You have won, in " + tries(result.triesUsed) + ".";

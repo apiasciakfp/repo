@@ -29,3 +29,4 @@ The pin goes through the same injection point the tests use (`createGame(drawCar
 | D7 | **`?card=XX` debug option** pins the hidden card via the same injection point tests use. Only cards in the deck are accepted; otherwise random. A dim `[debug]` line is printed when active. | Makes win/loss manually verifiable without changing rules. |
 | D3 | **Case-insensitive** input: `guess qh;` = `Guess QH;`, `exit` = `EXIT`. Cards are always displayed upper-case. | Friendlier; still not a "clever parser". |
 | D8 | **Guessing a card not in the deck** (e.g. `2C`) is a normal miss; no warning. | Brief: noticing that is the player's job. |
+| D5 | **Guesses after game over** are ignored **with a visible message** (not silent). | "Further guesses visibly change nothing." |

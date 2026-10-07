@@ -209,4 +209,38 @@
     contains(con.handle("Guess QH;").text, "in 5 tries");
     assertEqual(game.getState().status, "WON");
   });
+
+  // --- Slice 5: guesses after the game ends change nothing --------------
+  test("D5 / section-6 session complete: guess after a win is ignored", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    contains(con.handle("Guess 2C;").text, "Miss");
+    contains(con.handle("Guess QH;").text, "in 2 tries");
+    var before = game.getState();
+    var res = con.handle("Guess KH;");
+    contains(res.text, "game is over");
+    assertEqual(res.exit, false);
+    var after = game.getState();
+    assertEqual(after, before);
+    assertEqual([after.status, after.triesUsed], ["WON", 2]);
+  });
+
+  test("D5: guess after a loss is ignored, still LOST", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    ["9H", "10H", "JH", "KH", "AH"].forEach(function (c) { con.handle("Guess " + c + ";"); });
+    var before = game.getState();
+    contains(con.handle("Guess QH;").text, "game is over");
+    assertEqual(game.getState(), before);
+    assertEqual(game.getState().status, "LOST");
+  });
+
+  test("game.guess IGNORED echoes state and reveals the card", function () {
+    var game = NF.createGame(pinned("QH"));
+    game.guess(NF.parseCard("2C"));
+    game.guess(NF.parseCard("QH"));
+    assertEqual(game.guess(NF.parseCard("2C")), {
+      outcome: "IGNORED", repeated: false, triesUsed: 2, triesLeft: 3, revealed: { rank: "Q", suit: "H" }
+    });
+  });
 })();
