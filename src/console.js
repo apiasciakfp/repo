@@ -18,7 +18,7 @@
       return "Hit! The card was " + NotForFish.cardToString(result.revealed) +
         ". You have won, in " + tries(result.triesUsed) + ".";
     }
-    return "Miss.";
+    return "Miss. " + tries(result.triesLeft) + " left.";
   }
 
   NotForFish.createConsole = function (game) {

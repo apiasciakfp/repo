@@ -123,4 +123,52 @@
     contains(res.text, "10D");
     assertEqual(game.getState().status, "WON");
   });
+
+  // --- Slice 3: a wrong guess misses -------------------------------------
+  test("D8: pinned QH, Guess 2C; (not in deck) is a normal miss", function () {
+    var game = NF.createGame(pinned("QH"));
+    var res = NF.createConsole(game).handle("Guess 2C;");
+    contains(res.text, "Miss");
+    contains(res.text, "4 tries left");
+    assertEqual(res.text, "Miss. 4 tries left.", "no not-in-deck warning");
+    var state = game.getState();
+    assertEqual(state.status, "PLAYING");
+    assertEqual(state.triesUsed, 1);
+    assertEqual(state.revealed, null);
+  });
+
+  test("game.guess MISS result reveals nothing", function () {
+    var game = NF.createGame(pinned("QH"));
+    assertEqual(game.guess(NF.parseCard("2C")), {
+      outcome: "MISS", repeated: false, triesUsed: 1, triesLeft: 4, revealed: null
+    });
+  });
+
+  test("same rank, other suit is a miss", function () {
+    var game = NF.createGame(pinned("QH"));
+    contains(NF.createConsole(game).handle("Guess QS;").text, "Miss");
+    assertEqual(game.getState().status, "PLAYING");
+  });
+
+  test("section-6 session part 1: miss 2C then win with QH in 2 tries", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    var s0 = game.getState();
+    assertEqual([s0.triesUsed, s0.maxTries], [0, 5]);
+    contains(con.handle("Guess 2C;").text, "Miss");
+    var s1 = game.getState();
+    assertEqual([s1.status, s1.triesUsed], ["PLAYING", 1]);
+    var res = con.handle("Guess QH;");
+    contains(res.text, "Hit!");
+    contains(res.text, "in 2 tries");
+    var s2 = game.getState();
+    assertEqual([s2.status, s2.triesUsed], ["WON", 2]);
+    assertEqual(s2.guessed, [{ rank: "2", suit: "C" }, { rank: "Q", suit: "H" }]);
+  });
+
+  test("singular: 1 try left after 4 misses", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    ["9H", "10H", "JH"].forEach(function (c) { con.handle("Guess " + c + ";"); });
+    assertEqual(con.handle("Guess KH;").text, "Miss. 1 try left.");
+  });
 })();
