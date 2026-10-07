@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardGuessingGameNotForFish</title>
+<style>
+/* Light is the base. Dark redefines tokens only, twice: once for system
+   preference, once for an explicit data-theme choice. Nothing below
+   declares a colour outside these blocks. */
+:root {
+  --ground:      #F4F5F2;
+  --surface:     #FFFFFF;
+  --surface-2:   #ECEEE9;
+  --ink:         #15191B;
+  --ink-muted:   #5C6660;
+  --rule:        #D8DCD5;
+  --rule-strong: #BFC5BC;
+  --accent:      #A81F2D;
+  --accent-soft: #F2E2E3;
+  --felt:        #2C5646;
+  --felt-soft:   #DFE9E3;
+
+  /* the console keeps its dark identity in both themes — a terminal is dark */
+  --term-bg:     #12191C;
+  --term-fg:     #CBD7CF;
+  --term-dim:    #7C8C84;
+  --term-edge:   #22302F;
+
+  --shadow: 0 1px 2px rgba(21,25,27,.06), 0 6px 18px rgba(21,25,27,.05);
+
+  --sans: ui-sans-serif, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+          "Helvetica Neue", Arial, sans-serif;
+  --serif: "Iowan Old Style", Charter, "Bitstream Charter", Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #101413;
+    --surface:     #171C1B;
+    --surface-2:   #1D2422;
+    --ink:         #E4E8E4;
+    --ink-muted:   #97A39B;
+    --rule:        #29312E;
+    --rule-strong: #3A443F;
+    --accent:      #E4707B;
+    --accent-soft: #2E1D20;
+    --felt:        #74C2A0;
+    --felt-soft:   #16241E;
+    --term-bg:     #0C1113;
+    --term-fg:     #CBD7CF;
+    --term-dim:    #74847C;
+    --term-edge:   #1E2A28;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:      #101413;
+  --surface:     #171C1B;
+  --surface-2:   #1D2422;
+  --ink:         #E4E8E4;
+  --ink-muted:   #97A39B;
+  --rule:        #29312E;
+  --rule-strong: #3A443F;
+  --accent:      #E4707B;
+  --accent-soft: #2E1D20;
+  --felt:        #74C2A0;
+  --felt-soft:   #16241E;
+  --term-bg:     #0C1113;
+  --term-fg:     #CBD7CF;
+  --term-dim:    #74847C;
+  --term-edge:   #1E2A28;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.62;
+}
+.page { max-width: 1180px; margin: 0 auto; padding: 0 22px 90px; }
+
+header.masthead {
+  padding: 46px 0 26px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 8px;
+}
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+h1 {
+  font-family: var(--sans);
+  font-size: clamp(2.1rem, 5.4vw, 3.15rem);
+  line-height: 1.06;
+  margin: 0 0 14px;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.standfirst {
+  font-size: 1.12rem;
+  color: var(--ink-muted);
+  max-width: 62ch;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.shell { display: block; }
+@media (min-width: 1080px) {
+  .shell { display: grid; grid-template-columns: 200px 1fr; gap: 56px; align-items: start; }
+  nav.rail { position: sticky; top: 28px; }
+}
+nav.rail {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  padding: 18px 0;
+}
+nav.rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 1079px) {
+  nav.rail ol { flex-direction: row; flex-wrap: wrap; gap: 4px 18px; border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+}
+nav.rail a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  display: inline-block;
+  padding: 4px 0 4px 10px;
+  border-left: 2px solid transparent;
+}
+nav.rail a:hover { color: var(--ink); border-left-color: var(--accent); }
+nav.rail a .n { color: var(--accent); font-weight: 700; margin-right: 6px; }
+
+main { min-width: 0; padding-top: 10px; }
+main > * { max-width: 68ch; }
+main > .table-wrap, main > pre { max-width: 100%; }
+
+h2 {
+  font-family: var(--sans);
+  font-size: 1.72rem;
+  line-height: 1.15;
+  margin: 54px 0 14px;
+  padding-top: 26px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+h2 .secnum { font-size: 1.05rem; color: var(--accent); font-weight: 700; }
+h3 {
+  font-family: var(--sans);
+  font-size: 1.16rem;
+  font-weight: 650;
+  margin: 34px 0 10px;
+  text-wrap: balance;
+}
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 16px; padding-left: 26px; }
+li { margin-bottom: 6px; }
+hr { border: none; height: 0; margin: 0; }
+strong { font-weight: 650; }
+
+code {
+  font-family: var(--mono);
+  font-size: .855em;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+pre {
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 13.2px;
+  line-height: 1.55;
+  padding: 17px 20px;
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+  margin: 0 0 18px;
+}
+pre code { background: none; border: none; padding: 0; font-size: inherit; }
+pre.console {
+  background: var(--term-bg);
+  color: var(--term-fg);
+  border: 1px solid var(--term-edge);
+}
+pre.console .dim { color: var(--term-dim); }
+/* the spoken dialogue — prose, so it wraps and reads in the body face */
+pre.dialogue {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  padding: 20px 24px;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.66;
+  overflow-x: visible;
+  max-width: 68ch;
+}
+pre.dialogue code { font-family: var(--serif); white-space: pre-wrap; }
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin: 0 0 18px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 14.4px;
+  line-height: 1.5;
+}
+thead th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: var(--surface-2);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule-strong);
+}
+td { padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+
+p.colophon {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-muted);
+  border-top: 1px solid var(--rule);
+  padding-top: 18px;
+  margin-top: 60px;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <p class="eyebrow">CardGuessingGameNotForFish &middot; a brief for builders</p>
+  <h1>The card game you are about to build</h1>
+  <p class="standfirst">Fish shall NEVER play guess that card. A console program, a Magician, one hidden card, five tries. This brief says what the game is. How it is built is up to you.</p>
+</header>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sections">
+  <ol>
+    <li><a href="#1-the-game-as-a-conversation"><span class="n">1</span>The game as a conversation</a></li>
+    <li><a href="#2-the-conversation-as-exact-commands"><span class="n">2</span>The conversation, as commands</a></li>
+    <li><a href="#3-the-rules"><span class="n">3</span>The rules</a></li>
+    <li><a href="#4-a-session-you-could-have"><span class="n">4</span>A session you could have</a></li>
+    <li><a href="#5-decisions-that-are-yours"><span class="n">5</span>Decisions that are yours</a></li>
+    <li><a href="#6-how-a-random-game-can-be-tested"><span class="n">6</span>How a random game can be tested</a></li>
+    <li><a href="#7-done-means"><span class="n">7</span>Done means</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<p>You are going to build a console application: the player types a line, the program answers, until somebody wins. You will very likely build it with an LLM at your side. Fine — but the thinking is yours. You will form an idea of the game, turn the idea into a plan, and turn the plan into working, tested code. The LLM types faster than you. It does not get to decide for you.</p>
+
+<p>This brief explains the game as a conversation first, then shows the exact commands that conversation becomes, then the rules, then what your tests must be able to prove.</p>
+
+<hr>
+
+<h2 id="1-the-game-as-a-conversation"><span class="secnum">1</span>The game as a conversation</h2>
+
+<p>Read this first. Everything after it is the same thing expressed in commands.</p>
+
+<pre class="dialogue"><code>- User: "I would like to guess a card."
+- Magician: "I have drawn one card from my deck. It lies face down. You have five tries."
+- User: "Queen of Hearts?"
+- Magician: "No. Four tries left."
+- User: "Queen of Spades?"
+- Magician: "No. Three tries left."
+- User: "King of Hearts?"
+- Magician: "Correct." (turning over the King of Hearts) "You have won."</code></pre>
+
+<h3>The one thing to understand before anything else</h3>
+
+<p>The Magician draws <strong>one</strong> card, at random, before the first guess — and then never touches the deck again. Every guess is aimed at that same face-down card. The card does not change between tries. The game is a duel between the player and a single fixed secret.</p>
+
+<hr>
+
+<h2 id="2-the-conversation-as-exact-commands"><span class="secnum">2</span>The conversation, as exact commands</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>The conversation</th><th>The command</th></tr></thead>
+  <tbody>
+    <tr><td>&quot;Queen of Hearts?&quot;</td><td><code>Guess QH;</code></td></tr>
+    <tr><td>(leaving)</td><td><code>EXIT</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>That is the whole command set. <code>Guess</code> ends with a semicolon. <code>EXIT</code> takes none — it is not a move in the game, it is the player leaving the table.</p>
+
+<p>Do not build a clever parser. A command word, a card, a semicolon. If the input is stranger than that, what happens next is your design — see section&nbsp;5.</p>
+
+<h3>Writing a card</h3>
+
+<p>Rank first, then suit, no space in between. Ranks: <code>2</code> through <code>10</code>, then <code>J</code>, <code>Q</code>, <code>K</code>, <code>A</code>. Suits: <code>H</code> hearts, <code>D</code> diamonds, <code>S</code> spades, <code>C</code> clubs. So <code>QH</code> is the Queen of Hearts and <code>10D</code> — three characters — is the ten of diamonds.</p>
+
+<hr>
+
+<h2 id="3-the-rules"><span class="secnum">3</span>The rules</h2>
+
+<ul>
+  <li><strong>The deck</strong> is 24 cards: <code>9</code> through <code>A</code> in all four suits. The hidden card is drawn from it at random when the game starts.</li>
+  <li><strong>The player has 5 tries.</strong> Each <code>Guess</code> of a card consumes one.</li>
+  <li><strong>A guess hits</strong> when it names exactly the hidden card — same rank <em>and</em> same suit. Anything else is a miss.</li>
+  <li><strong>Any card may be guessed</strong>, even one that is not in the deck. <code>Guess 2C;</code> is a legal guess. It is also, against this deck, a guaranteed miss — noticing that is the player's job, not the program's.</li>
+  <li><strong>Hit → the player wins.</strong> The game is over.</li>
+  <li><strong>Five misses → the player loses.</strong> The Magician turns the card over: on defeat the hidden card is revealed. The game is over.</li>
+  <li><strong>After the game is over</strong>, further <code>Guess</code> commands are ignored — the game state stops changing. Whether the program ignores them silently or says so is your design.</li>
+  <li><strong><code>EXIT</code></strong> ends the program, at any moment.</li>
+</ul>
+
+<hr>
+
+<h2 id="4-a-session-you-could-have"><span class="secnum">4</span>A session you could have</h2>
+
+<p>Below is one possible run. <strong>The wording is an example, not a requirement</strong> — your program may speak however you design it to speak. What it may not do is withhold the facts: section&nbsp;7 lists exactly what a player must be able to tell from your console at every moment.</p>
+
+<pre class="console"><code><span class="dim">$ notforfish</span>
+The Magician has drawn a card. It lies face down. You have 5 tries.
+<span class="dim">&gt;</span> Guess QH;
+Miss. 4 tries left.
+<span class="dim">&gt;</span> Guess QS;
+Miss. 3 tries left.
+<span class="dim">&gt;</span> Guess KH;
+Hit! The card was KH. You have won, in 3 tries.
+<span class="dim">&gt;</span> Guess AH;
+(the game is over — nothing happens)
+<span class="dim">&gt;</span> EXIT</code></pre>
+
+<p>Your run will very probably look different, and not only in wording: the hidden card is random. This is one of several things that could have happened, not the thing that will happen.</p>
+
+<hr>
+
+<h2 id="5-decisions-that-are-yours"><span class="secnum">5</span>Decisions that are yours</h2>
+
+<p>This brief pins down what the game <em>is</em>. Everything it does not pin down is a design decision, and design decisions belong to you — not to the brief, and not to your LLM. Three you will meet early:</p>
+
+<ul>
+  <li><strong>Strange input.</strong> <code>Guess ZZ;</code>, a missing semicolon, an empty line. Rejected? Reported? Does it consume a try? Your call — but make it a decision, not an accident.</li>
+  <li><strong>The opening.</strong> What does the program say when it starts? How does a player who has never read this brief know what to type?</li>
+  <li><strong>Repetition.</strong> The player guesses <code>QH</code> twice. The rules above make it a legal, wasted try. Do you warn them? Stop them? Let them burn?</li>
+</ul>
+
+<p>Whatever you choose: write the choice down, and test it. &quot;The LLM picked something&quot; is not a decision.</p>
+
+<hr>
+
+<h2 id="6-how-a-random-game-can-be-tested"><span class="secnum">6</span>How a random game can be tested</h2>
+
+<p>Automated tests are part of this task, and here is the interesting part: the hidden card is random. How can a test assert &quot;the player wins by guessing <code>QH</code>&quot; when it cannot know the card?</p>
+
+<p>It cannot — unless your program lets it. The game logic should never reach for randomness directly; it should <em>ask</em> for a card, from something a test can replace. Push the randomness to the edge, where it can be swapped out, and the game becomes completely predictable without a single rule changing. How you arrange that is your design. That your tests can arrange it is a requirement.</p>
+
+<p>One session your test suite must be able to play:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Step</th><th>Equivalent typing</th><th>What is checked</th></tr></thead>
+  <tbody>
+    <tr><td>pin</td><td><em>(the test fixes the hidden card: <code>QH</code>)</em></td><td>a fresh game, 0 of 5 tries used</td></tr>
+    <tr><td>try 1</td><td><code>Guess 2C;</code></td><td>miss — 1 try used, game still on</td></tr>
+    <tr><td>try 2</td><td><code>Guess QH;</code></td><td>hit — <strong>victory</strong>, on try 2</td></tr>
+    <tr><td>after</td><td><code>Guess KH;</code></td><td><strong>ignored</strong> — the game already ended, nothing changes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>And one more, with no table given: a game that is <em>lost</em>. Five misses, defeat, the hidden card revealed. Deriving that session from the rules is your work; proving it with a test is the point.</p>
+
+<hr>
+
+<h2 id="7-done-means"><span class="secnum">7</span>Done means</h2>
+
+<p>Every item below is something an observer can check at your console or by running your tests — nothing here is about how the code looks inside.</p>
+
+<ul>
+  <li>When the program starts, the player can tell a game is on and how many tries they have.</li>
+  <li>After every guess, the player can tell whether it hit or missed; after every miss, how many tries remain.</li>
+  <li>A win is unmistakable.</li>
+  <li>A loss is unmistakable, and reveals the hidden card.</li>
+  <li>After the game ends, further guesses visibly change nothing.</li>
+  <li><code>EXIT</code> ends the program.</li>
+  <li>The automated tests pass, and they include: the pinned session from section&nbsp;6, a lost game, and every decision you made in section&nbsp;5.</li>
+  <li>The tests pin the hidden card without changing any game rule.</li>
+</ul>
+
+<p class="colophon">CardGuessingGameNotForFish. This brief is the whole specification — if a question is not answered here, the answer is yours to design.</p>
+
+</main>
+</div>
+</div>
+</body>
+</html>
