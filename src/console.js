@@ -32,6 +32,7 @@
     function handle(line) {
       var trimmed = String(line).trim();
       if (trimmed.toUpperCase() === "EXIT") return { text: "Goodbye.", exit: true };
+      if (trimmed === "") return { text: "Type: Guess QH;  or  EXIT. No try was used.", exit: false };
       var match = GUESS_PATTERN.exec(trimmed);
       var card = match && NotForFish.parseCard(match[1]);
       if (card) return { text: guessText(game.guess(card)), exit: false };

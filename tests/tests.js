@@ -283,4 +283,47 @@
     contains(res.text, "I don't understand");
     assertEqual(con.handle("hello").exit, false);
   });
+
+  // --- Slice 7: invalid input is rejected without using a try -----------
+  var INVALID = ["Guess ZZ;", "Guess QH", "Guess 1H;", "Guess 11H;", "Guess QX;", "hello", "", "   "];
+
+  INVALID.forEach(function (line) {
+    test("D2: " + JSON.stringify(line) + " is rejected, no try used", function () {
+      var game = NF.createGame(pinned("QH"));
+      var con = NF.createConsole(game);
+      con.handle("Guess 2C;");
+      var before = game.getState();
+      var res = con.handle(line);
+      contains(res.text, "Guess QH;");
+      contains(res.text, "No try was used");
+      assertEqual(res.exit, false);
+      assertEqual(game.getState(), before);
+    });
+  });
+
+  test("D2: invalid text quotes the trimmed line; empty line has its own text", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    assertEqual(con.handle("  hello  ").text,
+      'I don\'t understand "hello". Type: Guess QH;  or  EXIT. No try was used.');
+    assertEqual(con.handle("   ").text, "Type: Guess QH;  or  EXIT. No try was used.");
+  });
+
+  test("D2: invalid line after game over is still the invalid message", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    con.handle("Guess QH;");
+    var before = game.getState();
+    var res = con.handle("Guess ZZ;");
+    contains(res.text, "I don't understand");
+    assert(res.text.indexOf("game is over") === -1, "not the game-over text");
+    assertEqual(game.getState(), before);
+  });
+
+  test("D2: surrounding spaces are fine; next miss still says 4 tries left", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    con.handle("Guess ZZ;");
+    assertEqual(con.handle("  Guess 2C;  ").text, "Miss. 4 tries left.");
+    contains(con.handle(" Guess QH; ").text, "Hit!");
+  });
 })();
