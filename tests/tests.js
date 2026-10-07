@@ -326,4 +326,40 @@
     assertEqual(con.handle("  Guess 2C;  ").text, "Miss. 4 tries left.");
     contains(con.handle(" Guess QH; ").text, "Hit!");
   });
+
+  // --- Slice 8: repeated guess warns but still uses a try ---------------
+  test("D4: repeated 2C warns and uses a try", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    var first = con.handle("Guess 2C;").text;
+    assert(first.indexOf("already guessed") === -1, "first guess is not a repeat");
+    var res = con.handle("Guess 2C;");
+    contains(res.text, "already guessed 2C");
+    contains(res.text, "3 tries left");
+    assertEqual(res.text, "You already guessed 2C. Miss. 3 tries left.");
+    assertEqual(game.getState().triesUsed, 2);
+    assertEqual(game.getState().guessed, [{ rank: "2", suit: "C" }, { rank: "2", suit: "C" }]);
+  });
+
+  test("D4: game.guess sets repeated", function () {
+    var game = NF.createGame(pinned("QH"));
+    assertEqual(game.guess(NF.parseCard("2C")).repeated, false);
+    assertEqual(game.guess(NF.parseCard("3C")).repeated, false);
+    assertEqual(game.guess(NF.parseCard("2C")).repeated, true);
+  });
+
+  test("D3/D4: case-insensitive repeat (2c) is detected", function () {
+    var con = NF.createConsole(NF.createGame(pinned("QH")));
+    con.handle("Guess 2C;");
+    contains(con.handle("guess 2c;").text, "You already guessed 2C.");
+  });
+
+  test("D4: repeat as the 5th miss → loss text with warning prefix and reveal", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    ["9H", "10H", "JH", "KH"].forEach(function (c) { con.handle("Guess " + c + ";"); });
+    assertEqual(con.handle("Guess 9H;").text,
+      "You already guessed 9H. Miss. No tries left. The Magician turns the card over: it was QH. You have lost.");
+    assertEqual(game.getState().status, "LOST");
+  });
 })();

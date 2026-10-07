@@ -1,4 +1,4 @@
-// Command parsing and all player-facing text. Never touches the DOM or window.
+// Command parsing and all player-facing text. Never touches the DOM.
 (function () {
   var NotForFish = window.NotForFish = window.NotForFish || {};
 
@@ -13,7 +13,12 @@
     return n + (n === 1 ? " try" : " tries");
   }
 
-  function guessText(result) {
+  function guessText(card, result) {
+    var prefix = result.repeated ? "You already guessed " + NotForFish.cardToString(card) + ". " : "";
+    return prefix + outcomeText(result);
+  }
+
+  function outcomeText(result) {
     if (result.outcome === "IGNORED") {
       return "The game is over. Nothing happens. Type EXIT to leave.";
     }
@@ -35,7 +40,7 @@
       if (trimmed === "") return { text: "Type: Guess QH;  or  EXIT. No try was used.", exit: false };
       var match = GUESS_PATTERN.exec(trimmed);
       var card = match && NotForFish.parseCard(match[1]);
-      if (card) return { text: guessText(game.guess(card)), exit: false };
+      if (card) return { text: guessText(card, game.guess(card)), exit: false };
       return {
         text: "I don't understand \"" + trimmed + "\". Type: Guess QH;  or  EXIT. No try was used.",
         exit: false

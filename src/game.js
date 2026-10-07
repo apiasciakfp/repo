@@ -35,6 +35,7 @@
           revealed: copyCard(hidden)
         };
       }
+      var repeated = guessed.some(function (g) { return NotForFish.sameCard(g, card); });
       guessed.push(copyCard(card));
       var outcome;
       if (NotForFish.sameCard(card, hidden)) {
@@ -48,7 +49,7 @@
       }
       return {
         outcome: outcome,
-        repeated: false,
+        repeated: repeated,
         triesUsed: guessed.length,
         triesLeft: MAX_TRIES - guessed.length,
         revealed: status === "PLAYING" ? null : copyCard(hidden)
