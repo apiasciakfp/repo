@@ -27,14 +27,22 @@
 
     function guess(card) {
       guessed.push(copyCard(card));
-      var hit = NotForFish.sameCard(card, hidden);
-      if (hit) status = "WON";
+      var outcome;
+      if (NotForFish.sameCard(card, hidden)) {
+        status = "WON";
+        outcome = "HIT";
+      } else if (guessed.length === MAX_TRIES) {
+        status = "LOST";
+        outcome = "LOST";
+      } else {
+        outcome = "MISS";
+      }
       return {
-        outcome: hit ? "HIT" : "MISS",
+        outcome: outcome,
         repeated: false,
         triesUsed: guessed.length,
         triesLeft: MAX_TRIES - guessed.length,
-        revealed: hit ? copyCard(hidden) : null
+        revealed: status === "PLAYING" ? null : copyCard(hidden)
       };
     }
 

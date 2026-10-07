@@ -18,6 +18,10 @@
       return "Hit! The card was " + NotForFish.cardToString(result.revealed) +
         ". You have won, in " + tries(result.triesUsed) + ".";
     }
+    if (result.outcome === "LOST") {
+      return "Miss. No tries left. The Magician turns the card over: it was " +
+        NotForFish.cardToString(result.revealed) + ". You have lost.";
+    }
     return "Miss. " + tries(result.triesLeft) + " left.";
   }
 

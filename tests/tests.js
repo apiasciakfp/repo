@@ -171,4 +171,42 @@
     ["9H", "10H", "JH"].forEach(function (c) { con.handle("Guess " + c + ";"); });
     assertEqual(con.handle("Guess KH;").text, "Miss. 1 try left.");
   });
+
+  // --- Slice 4: five misses lose and reveal the card --------------------
+  test("pinned QH: five misses lose and reveal QH", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    var texts = ["9H", "10H", "JH", "KH", "AH"].map(function (c) {
+      return con.handle("Guess " + c + ";").text;
+    });
+    texts.slice(0, 4).forEach(function (t, i) {
+      assertEqual(t, "Miss. " + (4 - i) + (i === 3 ? " try" : " tries") + " left.", "response " + (i + 1));
+    });
+    contains(texts[4], "lost");
+    contains(texts[4], "QH");
+    contains(texts[4], "No tries left");
+    assertEqual(game.getState(), {
+      status: "LOST", triesUsed: 5, maxTries: 5, triesLeft: 0,
+      guessed: ["9H", "10H", "JH", "KH", "AH"].map(NF.parseCard),
+      revealed: { rank: "Q", suit: "H" }
+    });
+  });
+
+  test("game.guess LOST result on the 5th miss", function () {
+    var game = NF.createGame(pinned("QH"));
+    ["9H", "10H", "JH", "KH"].forEach(function (c) {
+      assertEqual(game.guess(NF.parseCard(c)).outcome, "MISS");
+    });
+    assertEqual(game.guess(NF.parseCard("AH")), {
+      outcome: "LOST", repeated: false, triesUsed: 5, triesLeft: 0, revealed: { rank: "Q", suit: "H" }
+    });
+  });
+
+  test("a hit on the 5th try wins, not loses", function () {
+    var game = NF.createGame(pinned("QH"));
+    var con = NF.createConsole(game);
+    ["9H", "10H", "JH", "KH"].forEach(function (c) { con.handle("Guess " + c + ";"); });
+    contains(con.handle("Guess QH;").text, "in 5 tries");
+    assertEqual(game.getState().status, "WON");
+  });
 })();
