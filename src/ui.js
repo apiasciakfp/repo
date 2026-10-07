@@ -44,6 +44,8 @@
     event.preventDefault();
     var line = input.value;
     print("> " + line, "echo");
+    var response = con.handle(line);
+    print(response.text);
     input.value = "";
     input.focus();
   });

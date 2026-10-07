@@ -7,9 +7,35 @@
     "It lies face down. You have 5 tries.\n" +
     "Type: Guess QH;  (rank 2-10, J, Q, K, A + suit H, D, S, C)  or  EXIT";
 
+  var GUESS_PATTERN = /^guess\s+(\S+?)\s*;$/i;
+
+  function tries(n) {
+    return n + (n === 1 ? " try" : " tries");
+  }
+
+  function guessText(result) {
+    if (result.outcome === "HIT") {
+      return "Hit! The card was " + NotForFish.cardToString(result.revealed) +
+        ". You have won, in " + tries(result.triesUsed) + ".";
+    }
+    return "Miss.";
+  }
+
   NotForFish.createConsole = function (game) {
+    function handle(line) {
+      var trimmed = String(line).trim();
+      var match = GUESS_PATTERN.exec(trimmed);
+      var card = match && NotForFish.parseCard(match[1]);
+      if (card) return { text: guessText(game.guess(card)), exit: false };
+      return {
+        text: "I don't understand \"" + trimmed + "\". Type: Guess QH;  or  EXIT. No try was used.",
+        exit: false
+      };
+    }
+
     return {
-      opening: function () { return OPENING; }
+      opening: function () { return OPENING; },
+      handle: handle
     };
   };
 })();

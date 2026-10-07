@@ -25,6 +25,19 @@
       };
     }
 
-    return { getState: getState };
+    function guess(card) {
+      guessed.push(copyCard(card));
+      var hit = NotForFish.sameCard(card, hidden);
+      if (hit) status = "WON";
+      return {
+        outcome: hit ? "HIT" : "MISS",
+        repeated: false,
+        triesUsed: guessed.length,
+        triesLeft: MAX_TRIES - guessed.length,
+        revealed: hit ? copyCard(hidden) : null
+      };
+    }
+
+    return { guess: guess, getState: getState };
   };
 })();

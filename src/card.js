@@ -13,9 +13,10 @@
     });
   });
 
-  // Rank then suit, no space: "QH", "10D". Invalid → null.
+  // Rank then suit, no space: "QH", "qh", "10d". Normalized upper-case. Invalid → null.
   function parseCard(text) {
     if (typeof text !== "string" || text.length < 2) return null;
+    text = text.toUpperCase();
     var rank = text.slice(0, -1);
     var suit = text.slice(-1);
     if (RANKS.indexOf(rank) === -1 || SUITS.indexOf(suit) === -1) return null;

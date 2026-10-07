@@ -86,4 +86,41 @@
     contains(text, "Guess QH;");
     contains(text, "EXIT");
   });
+
+  // --- Slice 2: a correct guess wins ------------------------------------
+  test("parseCard handles 10D and lower case", function () {
+    assertEqual(NF.parseCard("10D"), { rank: "10", suit: "D" });
+    assertEqual(NF.parseCard("10d"), { rank: "10", suit: "D" });
+    assertEqual(NF.parseCard("qh"), { rank: "Q", suit: "H" });
+    assertEqual(Object.keys(NF.parseCard("qh")), ["rank", "suit"]);
+  });
+
+  test("pinned QH: Guess QH; wins on try 1", function () {
+    var game = NF.createGame(pinned("QH"));
+    var res = NF.createConsole(game).handle("Guess QH;");
+    contains(res.text, "Hit!");
+    contains(res.text, "QH");
+    contains(res.text, "won");
+    contains(res.text, "1 try");
+    assertEqual(res.exit, false);
+    var state = game.getState();
+    assertEqual(state.status, "WON");
+    assertEqual(state.triesUsed, 1);
+    assertEqual(state.revealed, { rank: "Q", suit: "H" });
+  });
+
+  test("game.guess HIT result", function () {
+    var game = NF.createGame(pinned("QH"));
+    assertEqual(game.guess(NF.parseCard("QH")), {
+      outcome: "HIT", repeated: false, triesUsed: 1, triesLeft: 4, revealed: { rank: "Q", suit: "H" }
+    });
+  });
+
+  test("D3: pinned 10D + lower-case guess 10d; wins", function () {
+    var game = NF.createGame(pinned("10D"));
+    var res = NF.createConsole(game).handle("guess 10d;");
+    contains(res.text, "Hit!");
+    contains(res.text, "10D");
+    assertEqual(game.getState().status, "WON");
+  });
 })();
