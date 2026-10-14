@@ -1,0 +1,25 @@
+[project]
+name = "cardmultigame"
+version = "0.1.0"
+description = "Faithful surface-Pythonic port of CardMultigame (C# design-patterns showcase)"
+readme = "README.md"
+authors = [
+    { name = "lj_zolw", email = "lukasz@januszek.me" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+cardmultigame = "cardmultigame.program:main"
+
+[build-system]
+requires = ["uv_build>=0.11.3,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
