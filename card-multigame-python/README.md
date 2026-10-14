@@ -21,6 +21,33 @@ PYTHONPATH=src python -m cardmultigame.program          # macOS / Linux
 $env:PYTHONPATH="src"; python -m cardmultigame.program  # Windows PowerShell
 ```
 
+## GUI
+
+```bash
+uv run cardmultigame-gui
+```
+
+A tkinter window (stdlib — still no third-party dependencies) on top of the same `UiLogicDispatcher`
+the REPL uses; the engine is untouched. Every click is turned into the order string you would
+otherwise type (`Play GuessACard; SetMaxTurns 5; SETUP`, `Guess QH;`).
+
+- **Setup screen:** max turns (1–24) and the Red/Black variant. The deck is the default 24 cards
+  (custom decks are REPL-only for now).
+- **Table:** click a card to guess it. Each guess draws a random card that leaves the deck; it's
+  shown next to your guess and faded in the grid. Faded cards stay clickable, because noticing that
+  they can't come up again is the player's job.
+- **End:** a Victory/Defeat banner, clicks stop doing anything, and **New game** goes back to setup.
+
+The engine doesn't record which card was drawn, so `interface/gui_presenter.py` works it out by
+comparing the deck before and after each guess (read-only). That module has no display code and is
+covered by `tests/test_gui_presenter.py`.
+
+Card images are in `src/cardmultigame/assets/` (CC0, see `provenance.txt`) and are named
+`{Suit}-{1..13}.png` (1 = Ace, 11/12/13 = J/Q/K). The GUI uses `Back-R.png`; `Back-B.png` and the
+jokers (`X-*.png`) are unused, because the engine has no jokers.
+
+On Linux, uv's managed Python ships tkinter. A system Python may need the `python3-tk` package.
+
 ## Test
 
 ```bash
