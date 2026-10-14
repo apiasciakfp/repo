@@ -1,3 +1,2 @@
 - Every test needs to have the structure of Act, Assert and Arrange in comments. No matter the programming language. No exceptions.
 - Every test which mutates data needs to create new instance of this data and delete the instance after it happens. No mutating existing data - this could influence the stability of read-only tests.
-- When you add tests you need to mutate them to prove they can get red and that they do something useful. If you add a test, you need to prove it can go red if code under test doesn't work. In other words, when you add a test, perform manual mutation testing.
