@@ -10,6 +10,8 @@ SHOWCASE_SHRINK = 3
 HISTORY_SHRINK = 9
 HISTORY_PAIRS_PER_ROW = 6
 TABLE_COLOUR = "#2e6b3f"
+HIGHLIGHT_COLOUR = "#ffd34d"
+MUTED_TEXT = "#cfe3d4"
 FADE_TOWARDS_WHITE = 0.65
 
 
@@ -56,6 +58,8 @@ class CardGameApp:
 
         root.title("Card Multigame — Guess a Card!")
         root.configure(bg=TABLE_COLOUR)
+        root.bind("<Return>", lambda _event: self._on_enter())
+        self._on_enter = lambda: None
         self._show_setup()
 
     def _replace_screen(self) -> tk.Frame:
@@ -90,7 +94,10 @@ class CardGameApp:
             **label_style,
         ).pack(pady=4)
 
-        tk.Button(screen, text="Play", width=12, command=lambda: self._start(max_turns.get(), red_black.get())).pack(pady=(12, 0))
+        play = lambda: self._start(max_turns.get(), red_black.get())
+        tk.Button(screen, text="Play", width=12, command=play).pack(pady=(12, 0))
+        tk.Label(screen, text="(or press Enter)", bg=TABLE_COLOUR, fg=MUTED_TEXT).pack()
+        self._on_enter = play
 
     def _start(self, max_turns: int, red_black_variant: bool) -> None:
         self._session.start(max_turns, red_black_variant)
@@ -98,26 +105,37 @@ class CardGameApp:
 
     def _show_table(self) -> None:
         screen = self._replace_screen()
+        self._on_enter = lambda: None
 
         self._status = tk.Label(screen, bg=TABLE_COLOUR, fg="white", font=("Helvetica", 12), anchor="w")
-        self._status.grid(row=0, column=0, columnspan=2, sticky="we", pady=(0, 12))
+        self._status.grid(row=0, column=0, columnspan=2, sticky="we")
+        tk.Label(screen, text=self._session.rules_text(), bg=TABLE_COLOUR, fg=MUTED_TEXT, anchor="w").grid(
+            row=1, column=0, columnspan=2, sticky="we", pady=(0, 12)
+        )
 
         self._grid = tk.Frame(screen, bg=TABLE_COLOUR)
-        self._grid.grid(row=1, column=0, sticky="n")
+        self._grid.grid(row=2, column=0, sticky="n")
         self._card_buttons: dict[str, tk.Label] = {}
         self._build_card_grid()
 
         showcase = tk.Frame(screen, bg=TABLE_COLOUR, padx=24)
-        showcase.grid(row=1, column=1, sticky="n")
+        showcase.grid(row=2, column=1, sticky="n")
         self._your_guess = self._showcase_slot(showcase, "Your guess", 0)
         self._magician_draw = self._showcase_slot(showcase, "Magician's draw", 1)
 
         self._banner = tk.Label(showcase, bg=TABLE_COLOUR, font=("Helvetica", 22, "bold"))
         self._banner.grid(row=2, column=0, columnspan=2, pady=(16, 4))
-        self._new_game = tk.Button(showcase, text="New game", command=self._show_setup)
+        self._new_game = tk.Button(showcase, text="New game (Enter)", command=self._show_setup)
 
+        tk.Label(screen, text="Your guesses (left) and the Magician's draws (right):", bg=TABLE_COLOUR, fg=MUTED_TEXT).grid(
+            row=3, column=0, columnspan=2, sticky="w", pady=(16, 0)
+        )
         self._history = tk.Frame(screen, bg=TABLE_COLOUR)
-        self._history.grid(row=2, column=0, columnspan=2, sticky="w", pady=(16, 0))
+        self._history.grid(row=4, column=0, columnspan=2, sticky="nw")
+        # Reserve room for the history up front, so the window doesn't jump when the first guess lands.
+        history_rows = -(-self._session.tries_left() // HISTORY_PAIRS_PER_ROW)
+        card_height = self._images.get(BACK_FILE, HISTORY_SHRINK).height()
+        screen.grid_rowconfigure(4, minsize=history_rows * (card_height + 30))
 
         self._refresh()
 
@@ -127,10 +145,23 @@ class CardGameApp:
         ranks = list(dict.fromkeys(code[:-1] for code in cards))
 
         for code in cards:
-            button = tk.Label(self._grid, bg=TABLE_COLOUR, cursor="hand2", borderwidth=0)
-            button.grid(row=suits.index(code[-1]), column=ranks.index(code[:-1]), padx=3, pady=3)
+            button = tk.Label(
+                self._grid,
+                bg=TABLE_COLOUR,
+                cursor="hand2",
+                borderwidth=0,
+                highlightthickness=3,
+                highlightbackground=TABLE_COLOUR,
+            )
+            button.grid(row=suits.index(code[-1]), column=ranks.index(code[:-1]), padx=1, pady=1)
             button.bind("<Button-1>", lambda _event, c=code: self._guess(c))
+            button.bind("<Enter>", lambda _event, b=button: self._hover(b, True))
+            button.bind("<Leave>", lambda _event, b=button: self._hover(b, False))
             self._card_buttons[code] = button
+
+    def _hover(self, button: tk.Label, entering: bool) -> None:
+        lit = entering and not self._session.is_finished()
+        button.configure(highlightbackground=HIGHLIGHT_COLOUR if lit else TABLE_COLOUR)
 
     def _showcase_slot(self, parent: tk.Frame, caption: str, column: int) -> tk.Label:
         tk.Label(parent, text=caption, bg=TABLE_COLOUR, fg="white").grid(row=0, column=column, padx=6)
@@ -152,6 +183,8 @@ class CardGameApp:
                 image=self._images.get(asset_file_for(code), GRID_SHRINK, faded=code in drawn),
                 cursor="arrow" if finished else "hand2",
             )
+            if finished:
+                button.configure(highlightbackground=TABLE_COLOUR)
 
         last = self._session.history[-1] if self._session.history else None
         self._your_guess.configure(image=self._showcase_image(last.guessed if last else None))
@@ -162,11 +195,13 @@ class CardGameApp:
 
         outcome = self._session.outcome()
         if outcome == "Victory":
-            self._banner.configure(text="Victory!", fg="#ffd34d")
+            self._banner.configure(text="Victory!", fg=HIGHLIGHT_COLOUR)
         elif outcome == "Defeat":
             self._banner.configure(text="Defeat", fg="#ff8a80")
         if finished:
             self._new_game.grid(row=3, column=0, columnspan=2)
+            self._new_game.focus_set()
+            self._on_enter = self._show_setup
 
     def _showcase_image(self, card_code: str | None) -> tk.PhotoImage:
         return self._images.get(asset_file_for(card_code) if card_code else BACK_FILE, SHOWCASE_SHRINK)
@@ -176,11 +211,15 @@ class CardGameApp:
             child.destroy()
 
         for index, guess_round in enumerate(self._session.history):
-            pair = tk.Frame(self._history, bg="#ffd34d" if guess_round.hit else TABLE_COLOUR, padx=2, pady=2)
+            pair = tk.Frame(self._history, bg=HIGHLIGHT_COLOUR if guess_round.hit else TABLE_COLOUR, padx=2, pady=2)
             pair.grid(row=index // HISTORY_PAIRS_PER_ROW, column=index % HISTORY_PAIRS_PER_ROW, padx=6, pady=4)
             for side, code in enumerate((guess_round.guessed, guess_round.drawn)):
                 image = self._images.get(asset_file_for(code) if code else BACK_FILE, HISTORY_SHRINK)
                 tk.Label(pair, image=image, borderwidth=0).grid(row=0, column=side, padx=1)
+            caption = f"Turn {index + 1}" + (" — hit!" if guess_round.hit else "")
+            tk.Label(pair, text=caption, bg=pair["bg"], fg="black" if guess_round.hit else MUTED_TEXT).grid(
+                row=1, column=0, columnspan=2
+            )
 
 
 def main() -> None:

@@ -72,3 +72,42 @@ def test_a_hit_wins_the_game():
     assert session.history[-1].hit is True
     assert session.outcome() == "Victory"
     assert session.status_text().endswith("Victory!")
+
+
+def test_a_miss_mid_game_tells_the_player_how_many_tries_remain():
+    # Arrange
+    session = GuiSession()
+    session.start(3, False)
+
+    # Act
+    session.guess("2C")  # not in the deck: always a miss
+
+    # Assert
+    assert session.tries_left() == 2
+    assert session.status_text().endswith("2 tries left.")
+
+
+def test_the_last_try_is_counted_in_the_singular():
+    # Arrange
+    session = GuiSession()
+    session.start(2, False)
+
+    # Act
+    session.guess("2C")
+
+    # Assert
+    assert session.status_text().endswith("1 try left.")
+
+
+def test_the_table_states_which_rules_are_in_play():
+    # Arrange
+    standard = GuiSession()
+    red_black = GuiSession()
+
+    # Act
+    standard.start(5, False)
+    red_black.start(5, True)
+
+    # Assert
+    assert standard.rules_text() == "Standard rules: rank and suit have to match."
+    assert red_black.rules_text() == "Red/Black variant: only the colour has to match."

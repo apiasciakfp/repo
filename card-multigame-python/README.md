@@ -33,10 +33,14 @@ otherwise type (`Play GuessACard; SetMaxTurns 5; SETUP`, `Guess QH;`).
 
 - **Setup screen:** max turns (1–24) and the Red/Black variant. The deck is the default 24 cards
   (custom decks are REPL-only for now).
-- **Table:** click a card to guess it. Each guess draws a random card that leaves the deck; it's
+- **Table:** click a card to guess it (the card under the mouse is outlined). The status line shows the
+  turn and the tries left, and the line below it says which rules are in play. Each guess draws a random card that leaves the deck; it's
   shown next to your guess and faded in the grid. Faded cards stay clickable, because noticing that
   they can't come up again is the player's job.
+- **History:** every turn's guess/draw pair, captioned with its turn number; the winning pair is
+  framed in gold. Room for it is reserved up front, so the window doesn't resize mid-game.
 - **End:** a Victory/Defeat banner, clicks stop doing anything, and **New game** goes back to setup.
+- **Keyboard:** Enter starts the game on the setup screen and starts a new game once one has ended.
 
 The engine doesn't record which card was drawn, so `interface/gui_presenter.py` works it out by
 comparing the deck before and after each guess (read-only). That module has no display code and is
