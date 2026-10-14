@@ -35,6 +35,10 @@ def setup_command(max_turns: int, red_black_variant: bool) -> str:
     return f"Play GuessACard; SetMaxTurns {max_turns}; {variant}SETUP"
 
 
+def _tries(count: int) -> str:
+    return f"{count} try" if count == 1 else f"{count} tries"
+
+
 @dataclass(frozen=True)
 class GuessRound:
     guessed: str
@@ -47,9 +51,11 @@ class GuiSession:
         self._dispatcher = UiLogicDispatcher()
         self.all_cards: list[str] = []
         self.history: list[GuessRound] = []
+        self.red_black_variant = False
 
     def start(self, max_turns: int, red_black_variant: bool) -> None:
         self._dispatcher.setup_game(setup_command(max_turns, red_black_variant))
+        self.red_black_variant = red_black_variant
         self.all_cards = self._deck_codes()
         self.history = []
 
@@ -78,6 +84,15 @@ class GuiSession:
     def is_finished(self) -> bool:
         return QueryGameState.is_game_finished(self._state())
 
+    def tries_left(self) -> int:
+        state = self._state()
+        return state[GameStateKeys.MaxTurns] - state[GameStateKeys.CurrentTurn]
+
+    def rules_text(self) -> str:
+        if self.red_black_variant:
+            return "Red/Black variant: only the colour has to match."
+        return "Standard rules: rank and suit have to match."
+
     def status_text(self) -> str:
         state = self._state()
         turn = f"Turn {state[GameStateKeys.CurrentTurn]}/{state[GameStateKeys.MaxTurns]}"
@@ -94,7 +109,7 @@ class GuiSession:
             return f"{line} Victory!"
         if outcome == "Defeat":
             return f"{line} Defeat."
-        return line
+        return f"{line} {_tries(self.tries_left())} left."
 
     def _state(self):
         return self._dispatcher.current_state()
